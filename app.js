@@ -610,7 +610,7 @@ function renderTenants() {
                         <div class="tenant-name">${t.name}</div>
                         <div class="tenant-details">
                             ${room ? `<div class="tenant-detail-item"><i data-lucide="door-open"></i> ${room.name}</div>` : ''}
-                            ${t.phone ? `<div class="tenant-detail-item"><i data-lucide="phone"></i> ${t.phone}</div>` : ''}
+                            ${t.phone ? `<div class="tenant-detail-item" onclick="event.stopPropagation()"><i data-lucide="phone"></i> <a href="tel:${t.phone}" style="color:inherit;text-decoration:none;">${t.phone}</a></div>` : ''}
                             ${t.email ? `<div class="tenant-detail-item"><i data-lucide="mail"></i> ${t.email}</div>` : ''}
                         </div>
                     </div>
@@ -642,7 +642,7 @@ function showTenantDetail(tenantId) {
             ${tenant.phone ? `<div class="settings-item">
                 <div class="settings-item-icon" style="background:var(--success-bg);color:var(--success);"><i data-lucide="phone"></i></div>
                 <span class="settings-item-label">Số điện thoại</span>
-                <span class="settings-item-value">${tenant.phone}</span>
+                <span class="settings-item-value"><a href="tel:${tenant.phone}" style="color:var(--success);text-decoration:none;font-weight:600;">${tenant.phone}</a></span>
             </div>` : ''}
             ${tenant.idCard ? `<div class="settings-item">
                 <div class="settings-item-icon" style="background:var(--info-bg);color:var(--info);"><i data-lucide="id-card"></i></div>
