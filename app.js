@@ -1115,7 +1115,7 @@ function renderSettings() {
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
             <div style="margin-bottom:6px;">
                 <span style="background:rgba(99,102,241,0.15);color:var(--primary-light);padding:3px 10px;border-radius:20px;font-weight:600;font-size:10px;">
-                    v2.8
+                    v3.0
                 </span>
             </div>
             Nhà Trọ Eden · Powered by Firebase<br>
