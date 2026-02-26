@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="NhàTrọPro - Quản lý nhà trọ trên Telegram">
+    <title>NhàTrọPro Mini App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">
+            <div class="loading-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+            </div>
+            <h1 class="loading-title">NhàTrọ<span>Pro</span></h1>
+            <p class="loading-subtitle">Đang tải dữ liệu...</p>
+            <div class="loading-bar">
+                <div class="loading-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div class="app" id="app" style="display:none;">
+        <!-- Header -->
+        <header class="app-header" id="appHeader">
+            <div class="header-left">
+                <button class="back-btn" id="backBtn" style="display:none;">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <div class="header-brand">
+                    <i data-lucide="building-2" class="brand-icon"></i>
+                    <span class="brand-text">NhàTrọ<span class="accent">Pro</span></span>
+                </div>
+            </div>
+            <h2 class="header-title" id="headerTitle">Tổng quan</h2>
+            <div class="header-right">
+                <button class="header-action" id="refreshBtn" aria-label="Refresh">
+                    <i data-lucide="refresh-cw"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="app-content" id="appContent">
+            <!-- Dashboard Page -->
+            <section class="page active" id="pageDashboard">
+                <!-- Stats Cards -->
+                <div class="stats-grid" id="statsGrid"></div>
+                <!-- Quick Actions -->
+                <div class="section-card">
+                    <h3 class="section-title">
+                        <i data-lucide="zap"></i>
+                        Thao tác nhanh
+                    </h3>
+                    <div class="quick-actions" id="quickActions"></div>
+                </div>
+                <!-- Unpaid Invoices -->
+                <div class="section-card" id="unpaidSection">
+                    <h3 class="section-title">
+                        <i data-lucide="alert-circle"></i>
+                        Hóa đơn chưa thanh toán
+                    </h3>
+                    <div class="invoice-list" id="unpaidList"></div>
+                </div>
+            </section>
+
+            <!-- Rooms Page -->
+            <section class="page" id="pageRooms">
+                <div class="filter-bar" id="roomFilter"></div>
+                <div class="rooms-grid" id="roomsGrid"></div>
+            </section>
+
+            <!-- Room Detail Page -->
+            <section class="page" id="pageRoomDetail">
+                <div id="roomDetailContent"></div>
+            </section>
+
+            <!-- Tenants Page -->
+            <section class="page" id="pageTenants">
+                <div class="tenant-list" id="tenantList"></div>
+            </section>
+
+            <!-- Invoices Page -->
+            <section class="page" id="pageInvoices">
+                <div class="invoice-filter-bar" id="invoiceFilter"></div>
+                <div class="invoice-list-full" id="invoiceListFull"></div>
+            </section>
+
+            <!-- Services Page -->
+            <section class="page" id="pageServices">
+                <div class="service-list" id="serviceList"></div>
+            </section>
+
+            <!-- Settings Page -->
+            <section class="page" id="pageSettings">
+                <div id="settingsContent"></div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" id="bottomNav">
+            <button class="nav-btn active" data-page="dashboard">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Tổng quan</span>
+            </button>
+            <button class="nav-btn" data-page="rooms">
+                <i data-lucide="door-open"></i>
+                <span>Phòng</span>
+            </button>
+            <button class="nav-btn" data-page="tenants">
+                <i data-lucide="users"></i>
+                <span>Người thuê</span>
+            </button>
+            <button class="nav-btn" data-page="invoices">
+                <i data-lucide="receipt"></i>
+                <span>Hóa đơn</span>
+            </button>
+            <button class="nav-btn" data-page="settings">
+                <i data-lucide="settings"></i>
+                <span>Cài đặt</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-sheet" id="modalSheet">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle"></h3>
+                <button class="modal-close" id="modalClose">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="firebase-init.js"></script>
+    <script src="store.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
