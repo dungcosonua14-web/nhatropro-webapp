@@ -672,6 +672,13 @@ function showTenantDetail(tenantId) {
 
 // ─── Invoices Page ─────────────────────
 let invoiceFilter = 'all';
+let invoiceTab = 'all'; // 'all', 'room-utility', 'service'
+
+function setInvoiceTab(tab) {
+    invoiceTab = tab;
+    invoiceFilter = 'all';
+    renderInvoices();
+}
 
 function renderInvoices() {
     const invoices = Store.getInvoices();
@@ -680,16 +687,38 @@ function renderInvoices() {
     const unpaid = invoices.filter(i => !i.paid);
     const paid = invoices.filter(i => i.paid);
 
-    // Filter bar
-    document.getElementById('invoiceFilter').innerHTML = `
-        <button class="filter-chip ${invoiceFilter === 'all' ? 'active' : ''}" onclick="setInvoiceFilter('all')">Tất cả (${invoices.length})</button>
-        <button class="filter-chip ${invoiceFilter === 'unpaid' ? 'active' : ''}" onclick="setInvoiceFilter('unpaid')">Chưa TT (${unpaid.length})</button>
-        <button class="filter-chip ${invoiceFilter === 'paid' ? 'active' : ''}" onclick="setInvoiceFilter('paid')">Đã TT (${paid.length})</button>
+    // Tab bar (3 loại hóa đơn)
+    const tabBar = `
+        <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;">
+            <button class="filter-chip ${invoiceTab === 'all' ? 'active' : ''}" onclick="setInvoiceTab('all')" style="white-space:nowrap;">
+                <i data-lucide="receipt" style="width:13px;height:13px;"></i> Tổng hợp
+            </button>
+            <button class="filter-chip ${invoiceTab === 'room-utility' ? 'active' : ''}" onclick="setInvoiceTab('room-utility')" style="white-space:nowrap;">
+                <i data-lucide="home" style="width:13px;height:13px;"></i> Phòng & ĐN
+            </button>
+            <button class="filter-chip ${invoiceTab === 'service' ? 'active' : ''}" onclick="setInvoiceTab('service')" style="white-space:nowrap;">
+                <i data-lucide="concierge-bell" style="width:13px;height:13px;"></i> Dịch vụ
+            </button>
+        </div>
+    `;
+
+    // Filter bar (paid/unpaid)
+    document.getElementById('invoiceFilter').innerHTML = tabBar + `
+        <div style="display:flex;gap:6px;">
+            <button class="filter-chip ${invoiceFilter === 'all' ? 'active' : ''}" onclick="setInvoiceFilter('all')">Tất cả (${invoices.length})</button>
+            <button class="filter-chip ${invoiceFilter === 'unpaid' ? 'active' : ''}" onclick="setInvoiceFilter('unpaid')">Chưa TT (${unpaid.length})</button>
+            <button class="filter-chip ${invoiceFilter === 'paid' ? 'active' : ''}" onclick="setInvoiceFilter('paid')">Đã TT (${paid.length})</button>
+        </div>
     `;
 
     let filtered = invoices;
     if (invoiceFilter === 'unpaid') filtered = unpaid;
     else if (invoiceFilter === 'paid') filtered = paid;
+
+    // For service tab, only show invoices with service cost
+    if (invoiceTab === 'service') {
+        filtered = filtered.filter(i => (i.serviceCost || 0) > 0);
+    }
 
     // Sort by month desc
     filtered.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
@@ -698,51 +727,108 @@ function renderInvoices() {
         document.getElementById('invoiceListFull').innerHTML = `
             <div class="empty-state">
                 <i data-lucide="receipt"></i>
-                <p class="empty-state-text">Không có hóa đơn nào</p>
+                <p class="empty-state-text">${invoiceTab === 'service' ? 'Không có hóa đơn dịch vụ' : 'Không có hóa đơn nào'}</p>
             </div>
         `;
         lucide.createIcons();
         return;
     }
 
-    // Summary
-    const totalAmount = filtered.reduce((s, i) => s + (i.total || 0), 0);
+    // Summary based on tab
+    let summaryLabel, summaryAmount;
+    if (invoiceTab === 'room-utility') {
+        const totalRoomUtility = filtered.reduce((s, i) => s + (i.roomPrice || 0) + (i.electricCost || 0) + (i.waterCost || 0), 0);
+        summaryLabel = 'Tổng P+Đ+N';
+        summaryAmount = totalRoomUtility;
+    } else if (invoiceTab === 'service') {
+        const totalService = filtered.reduce((s, i) => s + (i.serviceCost || 0), 0);
+        summaryLabel = 'Tổng dịch vụ';
+        summaryAmount = totalService;
+    } else {
+        const totalAmount = filtered.reduce((s, i) => s + (i.total || 0), 0);
+        summaryLabel = invoiceFilter === 'unpaid' ? 'Tổng nợ' : invoiceFilter === 'paid' ? 'Đã thu' : 'Tổng cộng';
+        summaryAmount = totalAmount;
+    }
+
     let html = `<div class="summary-bar">
-        <span class="summary-label">${invoiceFilter === 'unpaid' ? 'Tổng nợ' : invoiceFilter === 'paid' ? 'Đã thu' : 'Tổng cộng'}</span>
-        <span class="summary-value">${formatVND(totalAmount)}</span>
+        <span class="summary-label">${summaryLabel}</span>
+        <span class="summary-value">${formatVND(summaryAmount)}</span>
     </div>`;
 
     filtered.forEach(inv => {
         const room = rooms.find(r => r.id === inv.roomId);
-        const settings = Store.getSettings();
-
-        // Breakdown
         const roomPrice = inv.roomPrice || (room ? room.price : 0);
         const electricCost = inv.electricCost || 0;
         const waterCost = inv.waterCost || 0;
         const serviceCost = inv.serviceCost || 0;
 
-        html += `
-            <div class="invoice-card" onclick="showInvoiceDetail('${inv.id}')">
-                <div class="invoice-card-header">
-                    <span class="invoice-room-name">${room ? room.name : '—'}</span>
-                    <span class="invoice-month">${formatMonth(inv.month)}</span>
+        if (invoiceTab === 'room-utility') {
+            // Tab Phòng & Điện nước
+            const subTotal = roomPrice + electricCost + waterCost;
+            html += `
+                <div class="invoice-card" onclick="showInvoiceDetail('${inv.id}')">
+                    <div class="invoice-card-header">
+                        <span class="invoice-room-name">${room ? room.name : '—'}</span>
+                        <span class="invoice-month">${formatMonth(inv.month)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div class="invoice-amount">${formatVND(subTotal)}</div>
+                        <span class="invoice-status ${inv.paid ? 'paid' : 'unpaid'}">
+                            <span class="room-status-dot" style="background:var(--${inv.paid ? 'success' : 'danger'})"></span>
+                            ${inv.paid ? 'Đã TT' : 'Chưa TT'}
+                        </span>
+                    </div>
+                    <div class="invoice-breakdown">
+                        <span class="invoice-breakdown-item"><i data-lucide="home"></i> ${formatVND(roomPrice)}</span>
+                        <span class="invoice-breakdown-item"><i data-lucide="zap"></i> ${inv.electricUsage || 0}kWh · ${formatVND(electricCost)}</span>
+                        <span class="invoice-breakdown-item"><i data-lucide="droplets"></i> ${inv.waterUsage || 0}m³ · ${formatVND(waterCost)}</span>
+                    </div>
                 </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div class="invoice-amount">${formatVND(inv.total)}</div>
-                    <span class="invoice-status ${inv.paid ? 'paid' : 'unpaid'}">
-                        <span class="room-status-dot" style="background:var(--${inv.paid ? 'success' : 'danger'})"></span>
-                        ${inv.paid ? 'Đã TT' : 'Chưa TT'}
-                    </span>
+            `;
+        } else if (invoiceTab === 'service') {
+            // Tab Dịch vụ
+            html += `
+                <div class="invoice-card" onclick="showInvoiceDetail('${inv.id}')">
+                    <div class="invoice-card-header">
+                        <span class="invoice-room-name">${room ? room.name : '—'}</span>
+                        <span class="invoice-month">${formatMonth(inv.month)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div class="invoice-amount">${formatVND(serviceCost)}</div>
+                        <span class="invoice-status ${inv.paid ? 'paid' : 'unpaid'}">
+                            <span class="room-status-dot" style="background:var(--${inv.paid ? 'success' : 'danger'})"></span>
+                            ${inv.paid ? 'Đã TT' : 'Chưa TT'}
+                        </span>
+                    </div>
+                    <div class="invoice-breakdown">
+                        <span class="invoice-breakdown-item"><i data-lucide="concierge-bell"></i> Dịch vụ: ${formatVND(serviceCost)}</span>
+                    </div>
                 </div>
-                <div class="invoice-breakdown">
-                    <span class="invoice-breakdown-item"><i data-lucide="home"></i> ${formatVND(roomPrice)}</span>
-                    ${electricCost ? `<span class="invoice-breakdown-item"><i data-lucide="zap"></i> ${formatVND(electricCost)}</span>` : ''}
-                    ${waterCost ? `<span class="invoice-breakdown-item"><i data-lucide="droplets"></i> ${formatVND(waterCost)}</span>` : ''}
-                    ${serviceCost ? `<span class="invoice-breakdown-item"><i data-lucide="concierge-bell"></i> ${formatVND(serviceCost)}</span>` : ''}
+            `;
+        } else {
+            // Tab Tổng hợp (mặc định)
+            html += `
+                <div class="invoice-card" onclick="showInvoiceDetail('${inv.id}')">
+                    <div class="invoice-card-header">
+                        <span class="invoice-room-name">${room ? room.name : '—'}</span>
+                        <span class="invoice-month">${formatMonth(inv.month)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div class="invoice-amount">${formatVND(inv.total)}</div>
+                        <span class="invoice-status ${inv.paid ? 'paid' : 'unpaid'}">
+                            <span class="room-status-dot" style="background:var(--${inv.paid ? 'success' : 'danger'})"></span>
+                            ${inv.paid ? 'Đã TT' : 'Chưa TT'}
+                        </span>
+                    </div>
+                    <div class="invoice-breakdown">
+                        <span class="invoice-breakdown-item"><i data-lucide="home"></i> ${formatVND(roomPrice)}</span>
+                        ${electricCost ? `<span class="invoice-breakdown-item"><i data-lucide="zap"></i> ${formatVND(electricCost)}</span>` : ''}
+                        ${waterCost ? `<span class="invoice-breakdown-item"><i data-lucide="droplets"></i> ${formatVND(waterCost)}</span>` : ''}
+                        ${serviceCost ? `<span class="invoice-breakdown-item"><i data-lucide="concierge-bell"></i> ${formatVND(serviceCost)}</span>` : ''}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
     });
 
     document.getElementById('invoiceListFull').innerHTML = html;
@@ -954,7 +1040,12 @@ function renderSettings() {
         </div>
 
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
-            Nhà Trọ Eden v1.0 · Powered by Firebase<br>
+            <div style="margin-bottom:6px;">
+                <span style="background:rgba(99,102,241,0.15);color:var(--primary-light);padding:3px 10px;border-radius:20px;font-weight:600;font-size:10px;">
+                    v2.0 · Build 20260226
+                </span>
+            </div>
+            Nhà Trọ Eden · Powered by Firebase<br>
             ${tgUser ? `👤 ${tgUser.first_name} ${tgUser.last_name || ''}` : ''}
         </div>
     `;
