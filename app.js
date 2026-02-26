@@ -102,6 +102,15 @@ function callPhone(phone) {
     }
 }
 
+function addToHomeScreen() {
+    if (tg?.addToHomeScreen) {
+        tg.addToHomeScreen();
+        haptic('success');
+    } else {
+        showToast('Tính năng này yêu cầu Telegram phiên bản mới nhất', 'error');
+    }
+}
+
 // ─── Toast ─────────────────────────────
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
@@ -1047,10 +1056,19 @@ function renderSettings() {
             </div>
         </div>
 
+        <div class="settings-group">
+            <div class="settings-group-title">Tiện ích</div>
+            <div class="settings-item" onclick="addToHomeScreen()" style="cursor:pointer;">
+                <div class="settings-item-icon" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(168,85,247,0.15));color:var(--primary-light);"><i data-lucide="smartphone"></i></div>
+                <span class="settings-item-label">Thêm vào Home Screen</span>
+                <span class="settings-item-value" style="color:var(--primary-light);font-size:12px;">📲 Cài app</span>
+            </div>
+        </div>
+
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
             <div style="margin-bottom:6px;">
                 <span style="background:rgba(99,102,241,0.15);color:var(--primary-light);padding:3px 10px;border-radius:20px;font-weight:600;font-size:10px;">
-                    v2.1 · Build 20260226c
+                    v2.2 · Build 20260226d
                 </span>
             </div>
             Nhà Trọ Eden · Powered by Firebase<br>
