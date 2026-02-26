@@ -8,7 +8,12 @@ const tg = window.Telegram?.WebApp;
 let tgUser = null;
 
 // 🔒 BLOCK access if NOT opened from Telegram
-if (!tg || !tg.initData || tg.initData === '') {
+const isTelegram = tg && tg.initData && tg.initData.length > 0
+    && tg.initDataUnsafe && tg.initDataUnsafe.user
+    && tg.initDataUnsafe.hash && tg.initDataUnsafe.hash.length > 0
+    && tg.platform && tg.platform !== 'unknown';
+
+if (!isTelegram) {
     // Not inside Telegram — show access denied
     document.getElementById('loadingScreen').remove();
     document.getElementById('app').style.display = 'none';
