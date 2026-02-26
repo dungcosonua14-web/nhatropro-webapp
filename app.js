@@ -95,11 +95,13 @@ function haptic(type) {
 }
 
 function callPhone(phone) {
-    if (tg?.openLink) {
-        tg.openLink('tel:' + phone);
-    } else {
-        window.open('tel:' + phone);
-    }
+    event?.stopPropagation?.();
+    navigator.clipboard.writeText(phone).then(() => {
+        showToast(`📋 Đã copy SĐT: ${phone}`, 'success');
+        haptic('success');
+    }).catch(() => {
+        showToast(`SĐT: ${phone}`, 'info');
+    });
 }
 
 function addToHomeScreen() {
@@ -627,11 +629,11 @@ function renderTenants() {
                         <div class="tenant-name">${t.name}</div>
                         <div class="tenant-details">
                             ${room ? `<div class="tenant-detail-item"><i data-lucide="door-open"></i> ${room.name}</div>` : ''}
-                            ${t.phone ? `<div class="tenant-detail-item" onclick="event.stopPropagation();callPhone('${t.phone}')"><i data-lucide="phone"></i> <span style="color:var(--success);text-decoration:underline;cursor:pointer;">${t.phone}</span></div>` : ''}
+                            ${t.phone ? `<div class="tenant-detail-item"><i data-lucide="phone"></i> ${t.phone}</div>` : ''}
                             ${t.email ? `<div class="tenant-detail-item"><i data-lucide="mail"></i> ${t.email}</div>` : ''}
                         </div>
                     </div>
-                    ${room ? `<span class="tenant-room-badge">${room.name}</span>` : ''}
+                    ${t.phone ? `<div onclick="event.stopPropagation();callPhone('${t.phone}')" style="width:38px;height:38px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><i data-lucide="phone" style="width:18px;height:18px;color:#fff;"></i></div>` : ''}
                 </div>
             </div>
         `;
@@ -656,10 +658,13 @@ function showTenantDetail(tenantId) {
             ${room ? `<span class="badge badge-info">${room.name}</span>` : ''}
         </div>
         <div style="display:flex;flex-direction:column;gap:10px;">
-            ${tenant.phone ? `<div class="settings-item">
+            ${tenant.phone ? `<div class="settings-item" style="cursor:pointer;" onclick="callPhone('${tenant.phone}')">
                 <div class="settings-item-icon" style="background:var(--success-bg);color:var(--success);"><i data-lucide="phone"></i></div>
                 <span class="settings-item-label">Số điện thoại</span>
-                <span class="settings-item-value"><span onclick="callPhone('${tenant.phone}')" style="color:var(--success);text-decoration:underline;font-weight:600;cursor:pointer;">${tenant.phone}</span></span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="settings-item-value" style="font-weight:600;">${tenant.phone}</span>
+                    <div style="width:30px;height:30px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;"><i data-lucide="copy" style="width:14px;height:14px;color:#fff;"></i></div>
+                </div>
             </div>` : ''}
             ${tenant.idCard ? `<div class="settings-item">
                 <div class="settings-item-icon" style="background:var(--info-bg);color:var(--info);"><i data-lucide="id-card"></i></div>
@@ -1068,7 +1073,7 @@ function renderSettings() {
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
             <div style="margin-bottom:6px;">
                 <span style="background:rgba(99,102,241,0.15);color:var(--primary-light);padding:3px 10px;border-radius:20px;font-weight:600;font-size:10px;">
-                    v2.2 · Build 20260226d
+                    v2.3 · Build 20260226e
                 </span>
             </div>
             Nhà Trọ Eden · Powered by Firebase<br>
