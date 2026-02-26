@@ -14,9 +14,13 @@
     <!-- 🔒 Security Gate: Only allow access from Telegram -->
     <script>
         (function () {
-            // TelegramWebviewProxy only exists inside real Telegram app
+            // ✅ Allowed Telegram User IDs (same as OWNER_CHAT_IDS in bot)
+            var ALLOWED_IDS = [320838772];
+
+            // Check 1: Must be inside real Telegram app
             var isRealTelegram = !!(window.TelegramWebviewProxy ||
                 (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData && window.Telegram.WebApp.initData.length > 50));
+
             if (!isRealTelegram) {
                 document.addEventListener('DOMContentLoaded', function () {
                     document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0f0f23;color:#e4e4e7;font-family:Inter,sans-serif;text-align:center;padding:20px;">' +
@@ -28,8 +32,27 @@
                         '<a href="https://t.me" style="margin-top:24px;padding:12px 24px;background:#6366f1;border-radius:12px;text-decoration:none;">' +
                         '<span style="color:white;font-weight:600;font-size:14px;">📱 Mở Telegram</span></a></div>';
                 });
-                // Stop loading any more scripts
                 window.__BLOCKED__ = true;
+                return;
+            }
+
+            // Check 2: Must be an authorized user
+            var tgApp = window.Telegram.WebApp;
+            var userId = tgApp.initDataUnsafe && tgApp.initDataUnsafe.user ? tgApp.initDataUnsafe.user.id : null;
+
+            if (!userId || ALLOWED_IDS.indexOf(userId) === -1) {
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0f0f23;color:#e4e4e7;font-family:Inter,sans-serif;text-align:center;padding:20px;">' +
+                        '<div style="font-size:64px;margin-bottom:20px;">⛔</div>' +
+                        '<h1 style="font-size:22px;font-weight:700;margin-bottom:10px;color:#f87171;">Không có quyền truy cập</h1>' +
+                        '<p style="font-size:14px;color:#a1a1aa;max-width:300px;line-height:1.6;">' +
+                        'Tài khoản Telegram của bạn không được cấp quyền sử dụng ứng dụng này.<br><br>' +
+                        'Liên hệ quản trị viên để được cấp quyền.</p>' +
+                        '<div style="margin-top:16px;padding:8px 16px;background:rgba(99,102,241,0.15);border-radius:8px;">' +
+                        '<span style="color:#a1a1aa;font-size:12px;">Your ID: ' + (userId || 'unknown') + '</span></div></div>';
+                });
+                window.__BLOCKED__ = true;
+                return;
             }
         })();
     </script>
