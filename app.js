@@ -94,6 +94,14 @@ function haptic(type) {
     }
 }
 
+function callPhone(phone) {
+    if (tg?.openLink) {
+        tg.openLink('tel:' + phone);
+    } else {
+        window.open('tel:' + phone);
+    }
+}
+
 // ─── Toast ─────────────────────────────
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
@@ -610,7 +618,7 @@ function renderTenants() {
                         <div class="tenant-name">${t.name}</div>
                         <div class="tenant-details">
                             ${room ? `<div class="tenant-detail-item"><i data-lucide="door-open"></i> ${room.name}</div>` : ''}
-                            ${t.phone ? `<div class="tenant-detail-item" onclick="event.stopPropagation()"><i data-lucide="phone"></i> <a href="tel:${t.phone}" style="color:inherit;text-decoration:none;">${t.phone}</a></div>` : ''}
+                            ${t.phone ? `<div class="tenant-detail-item" onclick="event.stopPropagation();callPhone('${t.phone}')"><i data-lucide="phone"></i> <span style="color:var(--success);text-decoration:underline;cursor:pointer;">${t.phone}</span></div>` : ''}
                             ${t.email ? `<div class="tenant-detail-item"><i data-lucide="mail"></i> ${t.email}</div>` : ''}
                         </div>
                     </div>
@@ -642,7 +650,7 @@ function showTenantDetail(tenantId) {
             ${tenant.phone ? `<div class="settings-item">
                 <div class="settings-item-icon" style="background:var(--success-bg);color:var(--success);"><i data-lucide="phone"></i></div>
                 <span class="settings-item-label">Số điện thoại</span>
-                <span class="settings-item-value"><a href="tel:${tenant.phone}" style="color:var(--success);text-decoration:none;font-weight:600;">${tenant.phone}</a></span>
+                <span class="settings-item-value"><span onclick="callPhone('${tenant.phone}')" style="color:var(--success);text-decoration:underline;font-weight:600;cursor:pointer;">${tenant.phone}</span></span>
             </div>` : ''}
             ${tenant.idCard ? `<div class="settings-item">
                 <div class="settings-item-icon" style="background:var(--info-bg);color:var(--info);"><i data-lucide="id-card"></i></div>
@@ -1042,7 +1050,7 @@ function renderSettings() {
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
             <div style="margin-bottom:6px;">
                 <span style="background:rgba(99,102,241,0.15);color:var(--primary-light);padding:3px 10px;border-radius:20px;font-weight:600;font-size:10px;">
-                    v2.0 · Build 20260226
+                    v2.1 · Build 20260226c
                 </span>
             </div>
             Nhà Trọ Eden · Powered by Firebase<br>
