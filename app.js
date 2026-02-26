@@ -161,7 +161,7 @@ let currentPage = 'dashboard';
 let pageHistory = [];
 
 function navigateTo(page, addToHistory = true) {
-    if (currentPage === page && page !== 'roomDetail') return;
+    if (currentPage === page && page !== 'roomDetail' && page !== 'invoiceDetail') return;
 
     // Hide all pages
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -173,6 +173,7 @@ function navigateTo(page, addToHistory = true) {
         'roomDetail': 'pageRoomDetail',
         'tenants': 'pageTenants',
         'invoices': 'pageInvoices',
+        'invoiceDetail': 'pageInvoiceDetail',
         'services': 'pageServices',
         'settings': 'pageSettings'
     };
@@ -182,7 +183,7 @@ function navigateTo(page, addToHistory = true) {
 
     // Update nav buttons
     document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.page === page);
+        btn.classList.toggle('active', btn.dataset.page === page || (page === 'invoiceDetail' && btn.dataset.page === 'invoices'));
     });
 
     // Header UI
@@ -193,6 +194,7 @@ function navigateTo(page, addToHistory = true) {
         'roomDetail': 'Chi tiết phòng',
         'tenants': 'Người thuê',
         'invoices': 'Hóa đơn',
+        'invoiceDetail': 'Chi tiết hóa đơn',
         'services': 'Dịch vụ',
         'settings': 'Cài đặt'
     };
@@ -201,7 +203,7 @@ function navigateTo(page, addToHistory = true) {
     // Back button
     const backBtn = document.getElementById('backBtn');
     const headerBrand = document.querySelector('.header-brand');
-    const isSubPage = page === 'roomDetail';
+    const isSubPage = page === 'roomDetail' || page === 'invoiceDetail';
     backBtn.style.display = isSubPage ? 'flex' : 'none';
     headerBrand.style.display = isSubPage ? 'none' : 'flex';
 
@@ -874,23 +876,24 @@ function showInvoiceDetail(invoiceId) {
     const roomPrice = inv.roomPrice || (room ? room.price : 0);
     const electricUsage = inv.electricUsage || 0;
     const waterUsage = inv.waterUsage || 0;
-    const electricPrice = inv.electricPrice || settings.electricityPrice || 0;
-    const waterPrice = inv.waterPrice || settings.waterPrice || 0;
     const electricCost = inv.electricCost || 0;
     const waterCost = inv.waterCost || 0;
     const serviceCost = inv.serviceCost || 0;
 
     let content = `
-        <div style="text-align:center;margin-bottom:16px;">
-            <h3 style="font-size:18px;font-weight:700;">HÓA ĐƠN ${formatMonthFull(inv.month).toUpperCase()}</h3>
-            <p style="color:var(--tg-theme-hint-color);font-size:13px;">${room ? room.name : '—'}</p>
-            <span class="badge ${inv.paid ? 'badge-success' : 'badge-danger'}" style="margin-top:6px;">
+        <div style="text-align:center;margin-bottom:20px;padding-top:8px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+                <i data-lucide="receipt" style="width:26px;height:26px;color:#fff;"></i>
+            </div>
+            <h3 style="font-size:20px;font-weight:800;margin:0 0 4px;">HÓA ĐƠN ${formatMonthFull(inv.month).toUpperCase()}</h3>
+            <p style="color:var(--tg-theme-hint-color);font-size:13px;margin:0 0 8px;">${room ? room.name : '—'}</p>
+            <span class="badge ${inv.paid ? 'badge-success' : 'badge-danger'}" style="font-size:12px;padding:5px 14px;">
                 ${inv.paid ? '✅ Đã thanh toán' : '⚠️ Chưa thanh toán'}
             </span>
         </div>
         
         <div class="settings-group">
-            <div class="settings-group-title">Chi tiết</div>
+            <div class="settings-group-title">Chi tiết khoản thu</div>
             <div class="settings-item">
                 <div class="settings-item-icon" style="background:rgba(99,102,241,0.12);color:var(--primary-light);"><i data-lucide="home"></i></div>
                 <span class="settings-item-label">Tiền phòng</span>
@@ -913,18 +916,22 @@ function showInvoiceDetail(invoiceId) {
             </div>` : ''}
         </div>
 
-        <div style="background:linear-gradient(135deg,var(--primary-dark),var(--primary));border-radius:var(--radius-lg);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:14px;color:rgba(255,255,255,0.8);">TỔNG CỘNG</span>
-            <span style="font-size:22px;font-weight:800;color:white;">${formatVND(inv.total)}</span>
+        <div style="background:linear-gradient(135deg,var(--primary-dark),var(--primary));border-radius:var(--radius-lg);padding:16px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+            <span style="font-size:14px;color:rgba(255,255,255,0.8);font-weight:600;">TỔNG CỘNG</span>
+            <span style="font-size:24px;font-weight:800;color:white;">${formatVND(inv.total)}</span>
         </div>
 
         ${tenants.length > 0 ? `
-            <div style="margin-top:12px;padding:12px;background:var(--surface);border-radius:var(--radius-md);">
-                <div style="font-size:12px;color:var(--tg-theme-hint-color);margin-bottom:6px;font-weight:600;">NGƯỜI THUÊ</div>
+            <div class="settings-group" style="margin-top:16px;">
+                <div class="settings-group-title">Người thuê</div>
                 ${tenants.map(t => `
-                    <div style="font-size:13px;display:flex;align-items:center;gap:6px;margin-top:4px;">
-                        <span style="font-weight:600;">${t.name}</span>
-                        ${t.phone ? `<span style="color:var(--tg-theme-hint-color);">— ${t.phone}</span>` : ''}
+                    <div class="settings-item" ${t.phone ? `onclick="callPhone('${t.phone}')" style="cursor:pointer;"` : ''}>
+                        <div class="settings-item-icon" style="background:rgba(99,102,241,0.12);color:var(--primary-light);"><i data-lucide="user"></i></div>
+                        <span class="settings-item-label">${t.name}</span>
+                        ${t.phone ? `<div style="display:flex;align-items:center;gap:6px;">
+                            <span class="settings-item-value" style="font-size:12px;">${t.phone}</span>
+                            <div style="width:28px;height:28px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;"><i data-lucide="copy" style="width:13px;height:13px;color:#fff;"></i></div>
+                        </div>` : ''}
                     </div>
                 `).join('')}
             </div>
@@ -937,17 +944,17 @@ function showInvoiceDetail(invoiceId) {
             if (qrBankId && qrAccountNo && !inv.paid) {
                 const qrUrl = 'https://img.vietqr.io/image/' + qrBankId + '-' + qrAccountNo + '-compact.png?amount=' + inv.total + '&accountName=' + encodeURIComponent(qrAccountName);
                 return `
-                    <div style="margin-top:16px;padding:16px;background:var(--surface);border-radius:var(--radius-lg);text-align:center;">
-                        <div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px;">
-                            <i data-lucide="smartphone" style="width:16px;height:16px;color:var(--primary-light);"></i>
-                            Quét QR để thanh toán
+                    <div style="margin-top:16px;padding:20px;background:var(--surface);border-radius:var(--radius-lg);text-align:center;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                            <i data-lucide="qr-code" style="width:18px;height:18px;color:var(--primary-light);"></i>
+                            Quét mã QR để thanh toán
                         </div>
-                        <img src="${qrUrl}" alt="QR" style="width:200px;border-radius:12px;margin-bottom:10px;" onerror="this.parentElement.style.display='none'">
-                        <div style="font-size:12px;color:var(--tg-theme-hint-color);text-align:left;display:flex;flex-direction:column;gap:4px;">
-                            <div><strong>Ngân hàng:</strong> ${qrBankId}</div>
-                            <div><strong>STK:</strong> ${qrAccountNo}</div>
-                            <div><strong>Chủ TK:</strong> ${qrAccountName}</div>
-                            <div><strong>Số tiền:</strong> <span style="color:var(--primary-light);font-weight:700;">${formatVND(inv.total)}</span></div>
+                        <img src="${qrUrl}" alt="QR" style="width:220px;border-radius:12px;margin-bottom:12px;" onerror="this.parentElement.style.display='none'">
+                        <div style="font-size:12px;color:var(--tg-theme-hint-color);text-align:left;display:flex;flex-direction:column;gap:6px;padding:12px;background:var(--tg-theme-bg-color);border-radius:var(--radius-md);">
+                            <div style="display:flex;justify-content:space-between;"><span>Ngân hàng</span><strong>${qrBankId}</strong></div>
+                            <div style="display:flex;justify-content:space-between;"><span>Số TK</span><strong>${qrAccountNo}</strong></div>
+                            <div style="display:flex;justify-content:space-between;"><span>Chủ TK</span><strong>${qrAccountName}</strong></div>
+                            <div style="display:flex;justify-content:space-between;"><span>Số tiền</span><strong style="color:var(--primary-light);">${formatVND(inv.total)}</strong></div>
                         </div>
                     </div>
                 `;
@@ -956,7 +963,9 @@ function showInvoiceDetail(invoiceId) {
         })()}
     `;
 
-    showModal(`HĐ ${room ? room.name : ''} — ${formatMonth(inv.month)}`, content);
+    document.getElementById('invoiceDetailContent').innerHTML = content;
+    navigateTo('invoiceDetail');
+    lucide.createIcons();
 }
 
 // ─── Services Page ─────────────────────
@@ -1098,7 +1107,7 @@ function renderSettings() {
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
             <div style="margin-bottom:6px;">
                 <span style="background:rgba(99,102,241,0.15);color:var(--primary-light);padding:3px 10px;border-radius:20px;font-weight:600;font-size:10px;">
-                    v2.6
+                    v2.7
                 </span>
             </div>
             Nhà Trọ Eden · Powered by Firebase<br>
