@@ -1,5 +1,5 @@
 /* ========================================
-   NhàTrọPro Telegram Mini App
+   Nhà Trọ Eden Telegram Mini App
    Main Application Logic
    ======================================== */
 
@@ -24,7 +24,7 @@ if (!isTelegram) {
             <h1 style="font-size:22px;font-weight:700;margin-bottom:10px;color:#f87171;">Truy cập bị từ chối</h1>
             <p style="font-size:14px;color:#a1a1aa;max-width:300px;line-height:1.6;">
                 Ứng dụng này chỉ hoạt động trong <strong style="color:#818cf8;">Telegram</strong>.<br><br>
-                Vui lòng mở qua bot <strong style="color:#818cf8;">NhàTrọPro</strong> trên Telegram để sử dụng.
+                Vui lòng mở qua bot <strong style="color:#818cf8;">Nhà Trọ Eden</strong> trên Telegram để sử dụng.
             </p>
             <div style="margin-top:24px;padding:12px 24px;background:#6366f1;border-radius:12px;cursor:pointer;"
                  onclick="window.open('https://t.me','_blank')">
@@ -954,7 +954,7 @@ function renderSettings() {
         </div>
 
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
-            NhàTrọPro WebApp v1.0 · Powered by Firebase<br>
+            Nhà Trọ Eden v1.0 · Powered by Firebase<br>
             ${tgUser ? `👤 ${tgUser.first_name} ${tgUser.last_name || ''}` : ''}
         </div>
     `;
@@ -984,7 +984,7 @@ document.getElementById('refreshBtn').addEventListener('click', async () => {
 
 // ─── App Init ──────────────────────────
 async function initApp() {
-    console.log('[App] 🚀 Initializing NhàTrọPro WebApp...');
+    console.log('[App] 🚀 Initializing Nhà Trọ Eden WebApp...');
 
     try {
         // Load all data from Firestore
