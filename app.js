@@ -3,29 +3,52 @@
    Main Application Logic
    ======================================== */
 
-// ─── Telegram WebApp SDK ───────────────
+// ─── Security: Telegram-only Access ────
 const tg = window.Telegram?.WebApp;
 let tgUser = null;
 
-if (tg) {
-    tg.ready();
-    tg.expand();
-    tgUser = tg.initDataUnsafe?.user;
-
-    // Apply Telegram theme colors
-    document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams?.bg_color || '#1a1a2e');
-    document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams?.text_color || '#e4e4e7');
-    document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams?.hint_color || '#a1a1aa');
-    document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams?.link_color || '#818cf8');
-    document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams?.button_color || '#6366f1');
-    document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams?.button_text_color || '#ffffff');
-    document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams?.secondary_bg_color || '#16162a');
-    document.documentElement.style.setProperty('--tg-theme-header-bg-color', tg.themeParams?.header_bg_color || '#0f0f23');
-
-    // Set viewport color
-    if (tg.setHeaderColor) tg.setHeaderColor('#0f0f23');
-    if (tg.setBackgroundColor) tg.setBackgroundColor('#1a1a2e');
+// 🔒 BLOCK access if NOT opened from Telegram
+if (!tg || !tg.initData || tg.initData === '') {
+    // Not inside Telegram — show access denied
+    document.getElementById('loadingScreen').remove();
+    document.getElementById('app').style.display = 'none';
+    document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;
+            background:#0f0f23;color:#e4e4e7;font-family:'Inter',sans-serif;text-align:center;padding:20px;">
+            <div style="font-size:64px;margin-bottom:20px;">🔒</div>
+            <h1 style="font-size:22px;font-weight:700;margin-bottom:10px;color:#f87171;">Truy cập bị từ chối</h1>
+            <p style="font-size:14px;color:#a1a1aa;max-width:300px;line-height:1.6;">
+                Ứng dụng này chỉ hoạt động trong <strong style="color:#818cf8;">Telegram</strong>.<br><br>
+                Vui lòng mở qua bot <strong style="color:#818cf8;">NhàTrọPro</strong> trên Telegram để sử dụng.
+            </p>
+            <div style="margin-top:24px;padding:12px 24px;background:#6366f1;border-radius:12px;cursor:pointer;"
+                 onclick="window.open('https://t.me','_blank')">
+                <span style="color:white;font-weight:600;font-size:14px;">📱 Mở Telegram</span>
+            </div>
+        </div>
+    `;
+    throw new Error('🔒 Access denied — not inside Telegram');
 }
+
+// ─── Telegram WebApp SDK ───────────────
+tg.ready();
+tg.expand();
+tgUser = tg.initDataUnsafe?.user;
+console.log('[Auth] ✅ Telegram user:', tgUser?.first_name, '| ID:', tgUser?.id);
+
+// Apply Telegram theme colors
+document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams?.bg_color || '#1a1a2e');
+document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams?.text_color || '#e4e4e7');
+document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams?.hint_color || '#a1a1aa');
+document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams?.link_color || '#818cf8');
+document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams?.button_color || '#6366f1');
+document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams?.button_text_color || '#ffffff');
+document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams?.secondary_bg_color || '#16162a');
+document.documentElement.style.setProperty('--tg-theme-header-bg-color', tg.themeParams?.header_bg_color || '#0f0f23');
+
+// Set viewport color
+if (tg.setHeaderColor) tg.setHeaderColor('#0f0f23');
+if (tg.setBackgroundColor) tg.setBackgroundColor('#1a1a2e');
 
 // ─── Helpers ───────────────────────────
 function formatVND(n) {
