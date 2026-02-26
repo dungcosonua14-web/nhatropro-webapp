@@ -51,9 +51,9 @@ document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.th
 document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams?.secondary_bg_color || '#16162a');
 document.documentElement.style.setProperty('--tg-theme-header-bg-color', tg.themeParams?.header_bg_color || '#0f0f23');
 
-// Set viewport color
-if (tg.setHeaderColor) tg.setHeaderColor('#0f0f23');
-if (tg.setBackgroundColor) tg.setBackgroundColor('#1a1a2e');
+// Set viewport color (light theme)
+if (tg.setHeaderColor) tg.setHeaderColor('#ffffff');
+if (tg.setBackgroundColor) tg.setBackgroundColor('#f0f4f8');
 
 // ─── Helpers ───────────────────────────
 function formatVND(n) {
@@ -265,92 +265,100 @@ function renderPage(page) {
 function renderDashboard() {
     const stats = Store.getStats();
     const settings = Store.getSettings();
+    const invoices = Store.getInvoices();
+    const rooms = Store.getRooms();
+    const unpaid = invoices.filter(i => !i.paid);
+    const totalUnpaid = unpaid.reduce((s, i) => s + (i.total || 0), 0);
+    const totalPaid = invoices.filter(i => i.paid).reduce((s, i) => s + (i.total || 0), 0);
 
-    // Stats Grid
+    // Stats Grid — gradient hero + info cards
     document.getElementById('statsGrid').innerHTML = `
-        <div class="stat-card primary" onclick="navigateTo('rooms')">
-            <div class="stat-icon"><i data-lucide="door-open"></i></div>
-            <div class="stat-value">${stats.totalRooms}</div>
-            <div class="stat-label">Tổng phòng</div>
+        <div class="stat-hero" style="background:linear-gradient(135deg,#ea580c,#f97316);" onclick="navigateTo('invoices')">
+            <div class="stat-card-icon"><i data-lucide="wallet"></i></div>
+            <div><div class="stat-value">${formatVND(totalUnpaid)}</div><div class="stat-label">Chưa thu (${unpaid.length} phiếu)</div></div>
         </div>
-        <div class="stat-card ${stats.occupied > 0 ? 'danger' : 'success'}">
-            <div class="stat-icon"><i data-lucide="${stats.occupied > 0 ? 'home' : 'check-circle'}"></i></div>
-            <div class="stat-value">${stats.occupied} / ${stats.available}</div>
-            <div class="stat-label">Thuê / Trống</div>
+        <div class="stat-card" onclick="navigateTo('rooms')">
+            <div class="stat-card-icon purple"><i data-lucide="door-open"></i></div>
+            <div><div class="stat-value">${stats.totalRooms}</div><div class="stat-label">Tổng phòng</div></div>
         </div>
-        <div class="stat-card info" onclick="navigateTo('tenants')">
-            <div class="stat-icon"><i data-lucide="users"></i></div>
-            <div class="stat-value">${stats.totalTenants}</div>
-            <div class="stat-label">Người thuê</div>
+        <div class="stat-card">
+            <div class="stat-card-icon green"><i data-lucide="circle-check-big"></i></div>
+            <div><div class="stat-value">${stats.available}</div><div class="stat-label">Phòng trống</div></div>
         </div>
-        <div class="stat-card warning" onclick="navigateTo('invoices')">
-            <div class="stat-icon"><i data-lucide="alert-triangle"></i></div>
-            <div class="stat-value">${stats.unpaidCount}</div>
-            <div class="stat-label">Chưa thanh toán</div>
+        <div class="stat-card" onclick="navigateTo('tenants')">
+            <div class="stat-card-icon blue"><i data-lucide="users"></i></div>
+            <div><div class="stat-value">${stats.totalTenants}</div><div class="stat-label">Người thuê</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon orange"><i data-lucide="home"></i></div>
+            <div><div class="stat-value">${stats.occupied > 0 ? Math.round(stats.occupied / stats.totalRooms * 100) : 0}%</div><div class="stat-label">Lấp đầy (${stats.occupied}/${stats.totalRooms})</div></div>
         </div>
     `;
 
     // Quick Actions
     document.getElementById('quickActions').innerHTML = `
-        <button class="quick-action-btn qa-rooms" onclick="navigateTo('rooms')">
-            <div class="action-icon"><i data-lucide="door-open"></i></div>
+        <button class="action-btn" onclick="navigateTo('rooms')">
+            <div class="action-icon purple"><i data-lucide="door-open"></i></div>
             <span class="action-label">Phòng</span>
         </button>
-        <button class="quick-action-btn qa-tenants" onclick="navigateTo('tenants')">
-            <div class="action-icon"><i data-lucide="users"></i></div>
+        <button class="action-btn" onclick="navigateTo('tenants')">
+            <div class="action-icon green"><i data-lucide="users"></i></div>
             <span class="action-label">Người thuê</span>
         </button>
-        <button class="quick-action-btn qa-invoices" onclick="navigateTo('invoices')">
-            <div class="action-icon"><i data-lucide="receipt"></i></div>
+        <button class="action-btn" onclick="navigateTo('invoices')">
+            <div class="action-icon orange"><i data-lucide="receipt"></i></div>
             <span class="action-label">Hóa đơn</span>
         </button>
-        <button class="quick-action-btn qa-services" onclick="navigateTo('services')">
-            <div class="action-icon"><i data-lucide="concierge-bell"></i></div>
+        <button class="action-btn" onclick="navigateTo('services')">
+            <div class="action-icon pink"><i data-lucide="concierge-bell"></i></div>
             <span class="action-label">Dịch vụ</span>
         </button>
     `;
 
     // Unpaid invoices
-    const unpaid = Store.getInvoices().filter(i => !i.paid);
-    const rooms = Store.getRooms();
     const unpaidSection = document.getElementById('unpaidSection');
-
     if (unpaid.length === 0) {
         unpaidSection.innerHTML = `
             <h3 class="section-title"><i data-lucide="check-circle"></i> Tình trạng thanh toán</h3>
             <div class="empty-state">
-                <i data-lucide="party-popper"></i>
+                <div class="empty-state-icon"><i data-lucide="party-popper"></i></div>
                 <p class="empty-state-text">Tất cả hóa đơn đã thanh toán! 🎉</p>
             </div>
         `;
     } else {
-        const totalUnpaid = unpaid.reduce((s, i) => s + (i.total || 0), 0);
         let html = `
             <h3 class="section-title"><i data-lucide="alert-circle"></i> Chưa thanh toán (${unpaid.length})</h3>
-            <div class="summary-bar">
-                <span class="summary-label">Tổng nợ</span>
-                <span class="summary-value">${formatVND(totalUnpaid)}</span>
+            <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--danger-bg);border-radius:var(--radius-md);margin-bottom:12px;">
+                <span style="font-size:var(--font-sm);color:var(--danger);font-weight:600;">Tổng nợ</span>
+                <strong style="color:var(--danger);font-size:var(--font-md);">${formatVND(totalUnpaid)}</strong>
             </div>
+            <div class="invoice-cards">
         `;
         unpaid.sort((a, b) => (b.total || 0) - (a.total || 0)).slice(0, 5).forEach(inv => {
             const room = rooms.find(r => r.id === inv.roomId);
+            const tenants = Store.getTenants().filter(t => t.roomId === inv.roomId);
+            const tNames = tenants.map(t => t.name).join(', ') || '—';
+            const getRoomTotal = (i) => (i.roomPrice || 0) + (i.electricCost || 0) + (i.waterCost || 0);
             html += `
-                <div class="invoice-card" onclick="showInvoiceDetail('${inv.id}')">
-                    <div class="invoice-card-header">
-                        <span class="invoice-room-name">${room ? room.name : '—'}</span>
-                        <span class="invoice-month">${formatMonth(inv.month)}</span>
+                <div class="inv-card inv-card-unpaid" onclick="showInvoiceDetail('${inv.id}')">
+                    <div class="inv-card-top">
+                        <div class="inv-card-room"><i data-lucide="door-open"></i><span>${room ? room.name : '—'}</span></div>
+                        <span class="badge badge-danger">Chưa TT</span>
                     </div>
-                    <div class="invoice-amount">${formatVND(inv.total)}</div>
-                    <span class="invoice-status unpaid">
-                        <span class="room-status-dot" style="background:var(--danger)"></span>
-                        Chưa thanh toán
-                    </span>
+                    <div class="inv-card-tenant"><i data-lucide="user"></i> ${tNames}</div>
+                    <div class="inv-card-details">
+                        <div class="inv-card-line"><span><i data-lucide="home" style="width:13px;height:13px;color:var(--primary)"></i> Phòng</span><span>${formatVND(inv.roomPrice || 0)}</span></div>
+                        <div class="inv-card-line"><span><i data-lucide="zap" style="width:13px;height:13px;color:var(--warning)"></i> Điện</span><span>${formatVND(inv.electricCost || 0)}</span></div>
+                        <div class="inv-card-line"><span><i data-lucide="droplets" style="width:13px;height:13px;color:var(--info)"></i> Nước</span><span>${formatVND(inv.waterCost || 0)}</span></div>
+                    </div>
+                    <div class="inv-card-total"><span>Tổng cộng</span><strong>${formatVND(inv.total || 0)}</strong></div>
                 </div>
             `;
         });
+        html += '</div>';
         if (unpaid.length > 5) {
-            html += `<div style="text-align:center;margin-top:8px;">
-                <button class="filter-chip" onclick="navigateTo('invoices')" style="margin:0 auto;">Xem tất cả ${unpaid.length} hóa đơn →</button>
+            html += `<div style="text-align:center;margin-top:12px;">
+                <button class="btn btn-secondary btn-sm" onclick="navigateTo('invoices')">Xem tất cả ${unpaid.length} hóa đơn →</button>
             </div>`;
         }
         unpaidSection.innerHTML = html;
