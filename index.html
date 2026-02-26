@@ -17,8 +17,10 @@
     <!-- 🔒 Security Gate: Only allow access from Telegram -->
     <script>
         (function () {
-            // ✅ Allowed Telegram User IDs (same as OWNER_CHAT_IDS in bot)
-            var ALLOWED_IDS = [320838772];
+            // ✅ Primary owner IDs (hardcoded fallback)
+            var OWNER_IDS = [320838772];
+            var FIREBASE_PROJECT = 'nhatroeden';
+            var FIREBASE_KEY = 'AIzaSyApSkAZZL9y5fYbF7h8yIaTtssCGNoMMQU';
 
             // Check 1: Must be inside real Telegram app
             var isRealTelegram = !!(window.TelegramWebviewProxy ||
@@ -39,24 +41,78 @@
                 return;
             }
 
-            // Check 2: Must be an authorized user
+            // Check 2: Must be an authorized user (checks Firebase)
             var tgApp = window.Telegram.WebApp;
             var userId = tgApp.initDataUnsafe && tgApp.initDataUnsafe.user ? tgApp.initDataUnsafe.user.id : null;
 
-            if (!userId || ALLOWED_IDS.indexOf(userId) === -1) {
+            // Quick pass for owner
+            if (userId && OWNER_IDS.indexOf(userId) !== -1) {
+                // Owner — allowed immediately
+                return;
+            }
+
+            // For other users, check Firebase authorized_users
+            if (!userId) {
+                window.__BLOCKED__ = true;
+                return;
+            }
+
+            // Check sessionStorage for cached auth result (avoid reload loop)
+            var authCache = sessionStorage.getItem('auth_' + userId);
+            if (authCache === 'ok') {
+                // Previously authorized — allow
+                return;
+            }
+            if (authCache === 'denied') {
+                // Previously denied
+                window.__BLOCKED__ = true;
                 document.addEventListener('DOMContentLoaded', function () {
                     document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0f0f23;color:#e4e4e7;font-family:Inter,sans-serif;text-align:center;padding:20px;">' +
                         '<div style="font-size:64px;margin-bottom:20px;">⛔</div>' +
                         '<h1 style="font-size:22px;font-weight:700;margin-bottom:10px;color:#f87171;">Không có quyền truy cập</h1>' +
                         '<p style="font-size:14px;color:#a1a1aa;max-width:300px;line-height:1.6;">' +
-                        'Tài khoản Telegram của bạn không được cấp quyền sử dụng ứng dụng này.<br><br>' +
-                        'Liên hệ quản trị viên để được cấp quyền.</p>' +
+                        'Tài khoản Telegram của bạn chưa được cấp quyền.<br><br>' +
+                        'Gõ <strong style="color:#818cf8;">/start</strong> trong bot để lấy Chat ID, rồi gửi cho chủ nhà trọ.</p>' +
                         '<div style="margin-top:16px;padding:8px 16px;background:rgba(99,102,241,0.15);border-radius:8px;">' +
-                        '<span style="color:#a1a1aa;font-size:12px;">Your ID: ' + (userId || 'unknown') + '</span></div></div>';
+                        '<span style="color:#a1a1aa;font-size:12px;">Your ID: ' + userId + '</span></div></div>';
                 });
-                window.__BLOCKED__ = true;
                 return;
             }
+
+            // First time — check Firebase, show loading
+            window.__AUTH_PENDING__ = true;
+            document.addEventListener('DOMContentLoaded', function () {
+                if (!window.__AUTH_PENDING__) return;
+                document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0f0f23;color:#e4e4e7;font-family:Inter,sans-serif;text-align:center;padding:20px;">' +
+                    '<div style="width:40px;height:40px;border:3px solid rgba(99,102,241,0.3);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px;"></div>' +
+                    '<p style="color:#a1a1aa;font-size:14px;">Đang kiểm tra quyền truy cập...</p>' +
+                    '<style>@keyframes spin{to{transform:rotate(360deg)}}</style></div>';
+            });
+
+            var url = 'https://firestore.googleapis.com/v1/projects/' + FIREBASE_PROJECT + '/databases/(default)/documents/authorized_users/' + userId + '?key=' + FIREBASE_KEY;
+            fetch(url).then(function (res) {
+                if (res.ok) {
+                    sessionStorage.setItem('auth_' + userId, 'ok');
+                    window.__AUTH_PENDING__ = false;
+                    window.__BLOCKED__ = false;
+                    location.reload();
+                } else {
+                    sessionStorage.setItem('auth_' + userId, 'denied');
+                    window.__BLOCKED__ = true;
+                    window.__AUTH_PENDING__ = false;
+                    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0f0f23;color:#e4e4e7;font-family:Inter,sans-serif;text-align:center;padding:20px;">' +
+                        '<div style="font-size:64px;margin-bottom:20px;">⛔</div>' +
+                        '<h1 style="font-size:22px;font-weight:700;margin-bottom:10px;color:#f87171;">Không có quyền truy cập</h1>' +
+                        '<p style="font-size:14px;color:#a1a1aa;max-width:300px;line-height:1.6;">' +
+                        'Tài khoản Telegram của bạn chưa được cấp quyền.<br><br>' +
+                        'Gõ <strong style="color:#818cf8;">/start</strong> trong bot để lấy Chat ID, rồi gửi cho chủ nhà trọ.</p>' +
+                        '<div style="margin-top:16px;padding:8px 16px;background:rgba(99,102,241,0.15);border-radius:8px;">' +
+                        '<span style="color:#a1a1aa;font-size:12px;">Your ID: ' + userId + '</span></div></div>';
+                }
+            }).catch(function () {
+                window.__AUTH_PENDING__ = false;
+                window.__BLOCKED__ = false;
+            });
         })();
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -212,9 +268,9 @@
     </div>
 
     <script>if (!window.__BLOCKED__) {</script>
-    <script src="firebase-init.js?v=2.7"></script>
-    <script src="store.js?v=2.7"></script>
-    <script src="app.js?v=2.7"></script>
+    <script src="firebase-init.js?v=2.8"></script>
+    <script src="store.js?v=2.8"></script>
+    <script src="app.js?v=2.8"></script>
     <script>}</script>
 </body>
 
