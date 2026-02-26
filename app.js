@@ -929,6 +929,31 @@ function showInvoiceDetail(invoiceId) {
                 `).join('')}
             </div>
         ` : ''}
+
+        ${(() => {
+            const qrBankId = settings.qrAll_bankId || '';
+            const qrAccountNo = settings.qrAll_accountNo || '';
+            const qrAccountName = settings.qrAll_accountName || '';
+            if (qrBankId && qrAccountNo && !inv.paid) {
+                const qrUrl = 'https://img.vietqr.io/image/' + qrBankId + '-' + qrAccountNo + '-compact.png?amount=' + inv.total + '&accountName=' + encodeURIComponent(qrAccountName);
+                return `
+                    <div style="margin-top:16px;padding:16px;background:var(--surface);border-radius:var(--radius-lg);text-align:center;">
+                        <div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                            <i data-lucide="smartphone" style="width:16px;height:16px;color:var(--primary-light);"></i>
+                            Quét QR để thanh toán
+                        </div>
+                        <img src="${qrUrl}" alt="QR" style="width:200px;border-radius:12px;margin-bottom:10px;" onerror="this.parentElement.style.display='none'">
+                        <div style="font-size:12px;color:var(--tg-theme-hint-color);text-align:left;display:flex;flex-direction:column;gap:4px;">
+                            <div><strong>Ngân hàng:</strong> ${qrBankId}</div>
+                            <div><strong>STK:</strong> ${qrAccountNo}</div>
+                            <div><strong>Chủ TK:</strong> ${qrAccountName}</div>
+                            <div><strong>Số tiền:</strong> <span style="color:var(--primary-light);font-weight:700;">${formatVND(inv.total)}</span></div>
+                        </div>
+                    </div>
+                `;
+            }
+            return '';
+        })()}
     `;
 
     showModal(`HĐ ${room ? room.name : ''} — ${formatMonth(inv.month)}`, content);
@@ -1073,7 +1098,7 @@ function renderSettings() {
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
             <div style="margin-bottom:6px;">
                 <span style="background:rgba(99,102,241,0.15);color:var(--primary-light);padding:3px 10px;border-radius:20px;font-weight:600;font-size:10px;">
-                    v2.5
+                    v2.6
                 </span>
             </div>
             Nhà Trọ Eden · Powered by Firebase<br>
