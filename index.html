@@ -11,6 +11,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- 🔒 Security Gate: Only allow access from Telegram -->
+    <script>
+        (function () {
+            // TelegramWebviewProxy only exists inside real Telegram app
+            var isRealTelegram = !!(window.TelegramWebviewProxy ||
+                (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData && window.Telegram.WebApp.initData.length > 50));
+            if (!isRealTelegram) {
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0f0f23;color:#e4e4e7;font-family:Inter,sans-serif;text-align:center;padding:20px;">' +
+                        '<div style="font-size:64px;margin-bottom:20px;">🔒</div>' +
+                        '<h1 style="font-size:22px;font-weight:700;margin-bottom:10px;color:#f87171;">Truy cập bị từ chối</h1>' +
+                        '<p style="font-size:14px;color:#a1a1aa;max-width:300px;line-height:1.6;">' +
+                        'Ứng dụng này chỉ hoạt động trong <strong style="color:#818cf8;">Telegram</strong>.<br><br>' +
+                        'Vui lòng mở qua bot <strong style="color:#818cf8;">NhàTrọPro</strong> trên Telegram để sử dụng.</p>' +
+                        '<a href="https://t.me" style="margin-top:24px;padding:12px 24px;background:#6366f1;border-radius:12px;text-decoration:none;">' +
+                        '<span style="color:white;font-weight:600;font-size:14px;">📱 Mở Telegram</span></a></div>';
+                });
+                // Stop loading any more scripts
+                window.__BLOCKED__ = true;
+            }
+        })();
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -157,9 +179,11 @@
         </div>
     </div>
 
+    <script>if (!window.__BLOCKED__) {</script>
     <script src="firebase-init.js"></script>
     <script src="store.js"></script>
     <script src="app.js"></script>
+    <script>}</script>
 </body>
 
 </html>
