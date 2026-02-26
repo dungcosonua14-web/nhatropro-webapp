@@ -709,26 +709,23 @@ function renderInvoices() {
     const unpaid = invoices.filter(i => !i.paid);
     const paid = invoices.filter(i => i.paid);
 
-    // Tab bar (3 loại hóa đơn) - grid layout
-    const tabBar = `
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
-            <button class="filter-chip ${invoiceTab === 'all' ? 'active' : ''}" onclick="setInvoiceTab('all')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;">
-                <i data-lucide="receipt" style="width:18px;height:18px;"></i>
-                <span style="font-size:11px;">Tổng hợp</span>
+    // ── Tab bar: Invoice type (separate container) ──
+    document.getElementById('invoiceTabBar').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:var(--surface);border-radius:12px;padding:3px;margin-bottom:12px;">
+            <button onclick="setInvoiceTab('all')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all 0.2s;${invoiceTab === 'all' ? 'background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.4);' : 'background:transparent;color:var(--tg-theme-hint-color);'}">
+                <i data-lucide="receipt" style="width:15px;height:15px;"></i> Tổng hợp
             </button>
-            <button class="filter-chip ${invoiceTab === 'room-utility' ? 'active' : ''}" onclick="setInvoiceTab('room-utility')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;">
-                <i data-lucide="home" style="width:18px;height:18px;"></i>
-                <span style="font-size:11px;">Phòng & ĐN</span>
+            <button onclick="setInvoiceTab('room-utility')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all 0.2s;${invoiceTab === 'room-utility' ? 'background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.4);' : 'background:transparent;color:var(--tg-theme-hint-color);'}">
+                <i data-lucide="home" style="width:15px;height:15px;"></i> P & ĐN
             </button>
-            <button class="filter-chip ${invoiceTab === 'service' ? 'active' : ''}" onclick="setInvoiceTab('service')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;">
-                <i data-lucide="concierge-bell" style="width:18px;height:18px;"></i>
-                <span style="font-size:11px;">Dịch vụ</span>
+            <button onclick="setInvoiceTab('service')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border:none;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all 0.2s;${invoiceTab === 'service' ? 'background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.4);' : 'background:transparent;color:var(--tg-theme-hint-color);'}">
+                <i data-lucide="concierge-bell" style="width:15px;height:15px;"></i> Dịch vụ
             </button>
         </div>
     `;
 
-    // Filter bar (paid/unpaid)
-    document.getElementById('invoiceFilter').innerHTML = tabBar + `
+    // ── Filter bar: Paid/Unpaid (separate container) ──
+    document.getElementById('invoiceFilter').innerHTML = `
         <div style="display:flex;gap:6px;">
             <button class="filter-chip ${invoiceFilter === 'all' ? 'active' : ''}" onclick="setInvoiceFilter('all')">Tất cả (${invoices.length})</button>
             <button class="filter-chip ${invoiceFilter === 'unpaid' ? 'active' : ''}" onclick="setInvoiceFilter('unpaid')">Chưa TT (${unpaid.length})</button>
@@ -1076,7 +1073,7 @@ function renderSettings() {
         <div style="text-align:center;padding:16px 0;color:var(--tg-theme-hint-color);font-size:11px;">
             <div style="margin-bottom:6px;">
                 <span style="background:rgba(99,102,241,0.15);color:var(--primary-light);padding:3px 10px;border-radius:20px;font-weight:600;font-size:10px;">
-                    v2.4
+                    v2.5
                 </span>
             </div>
             Nhà Trọ Eden · Powered by Firebase<br>
