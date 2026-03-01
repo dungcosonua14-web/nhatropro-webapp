@@ -649,6 +649,53 @@ body {
     color: var(--primary-light);
 }
 
+/* ── Search Bar ───────────────────────── */
+.search-bar-container {
+    margin-bottom: 12px;
+}
+
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: 0 12px;
+    height: 44px;
+    transition: all 0.2s ease;
+}
+
+.search-bar:focus-within {
+    border-color: var(--primary-light);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.search-bar i {
+    color: var(--tg-theme-hint-color);
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.search-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--tg-theme-text-color);
+    font-size: 14px;
+    padding: 0 10px;
+    height: 100%;
+    outline: none;
+    font-family: var(--font);
+}
+
+.search-bar input::placeholder {
+    color: var(--tg-theme-hint-color);
+    opacity: 0.7;
+}
+
 /* ── Filter Chips / Buttons ───────────── */
 .filter-chip,
 .filter-btn {

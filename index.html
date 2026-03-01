@@ -188,6 +188,12 @@
 
             <!-- Rooms Page -->
             <section class="page" id="pageRooms">
+                <div class="search-bar-container">
+                    <div class="search-bar">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="roomSearchInput" placeholder="Tìm kiếm phòng...">
+                    </div>
+                </div>
                 <div class="filter-bar" id="roomFilter"></div>
                 <div class="rooms-grid" id="roomsGrid"></div>
             </section>
@@ -199,12 +205,25 @@
 
             <!-- Tenants Page -->
             <section class="page" id="pageTenants">
+                <div class="search-bar-container">
+                    <div class="search-bar">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="tenantSearchInput"
+                            placeholder="Tìm kiếm người thuê (tên, sđt, phòng)...">
+                    </div>
+                </div>
                 <div class="tenant-list" id="tenantList"></div>
             </section>
 
             <!-- Invoices Page -->
             <section class="page" id="pageInvoices">
                 <div id="invoiceTabBar"></div>
+                <div class="search-bar-container">
+                    <div class="search-bar">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="invoiceSearchInput" placeholder="Tìm kiếm hóa đơn...">
+                    </div>
+                </div>
                 <div class="invoice-filter-bar" id="invoiceFilter"></div>
                 <div class="invoice-list-full" id="invoiceListFull"></div>
             </section>

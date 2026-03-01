@@ -369,6 +369,12 @@ function renderDashboard() {
 
 // ─── Rooms Page ────────────────────────
 let roomFilter = 'all';
+let roomSearchQuery = '';
+
+document.getElementById('roomSearchInput')?.addEventListener('input', (e) => {
+    roomSearchQuery = e.target.value.toLowerCase().trim();
+    renderRooms();
+});
 
 function renderRooms() {
     const rooms = Store.getRooms();
@@ -388,6 +394,11 @@ function renderRooms() {
     let filtered = rooms;
     if (roomFilter === 'occupied') filtered = rooms.filter(r => r.status === 'occupied');
     else if (roomFilter === 'available') filtered = rooms.filter(r => r.status !== 'occupied');
+
+    // Search room
+    if (roomSearchQuery) {
+        filtered = filtered.filter(r => (r.name || '').toLowerCase().includes(roomSearchQuery));
+    }
 
     // Sort by name
     filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'));
@@ -606,6 +617,13 @@ function renderRoomDetail(roomId) {
 }
 
 // ─── Tenants Page ──────────────────────
+let tenantSearchQuery = '';
+
+document.getElementById('tenantSearchInput')?.addEventListener('input', (e) => {
+    tenantSearchQuery = e.target.value.toLowerCase().trim();
+    renderTenants();
+});
+
 function renderTenants() {
     const tenants = Store.getTenants();
     const rooms = Store.getRooms();
@@ -621,12 +639,21 @@ function renderTenants() {
         return;
     }
 
+    let filtered = tenants;
+    if (tenantSearchQuery) {
+        filtered = tenants.filter(t => {
+            const room = rooms.find(r => r.id === t.roomId);
+            const searchStr = `${t.name || ''} ${t.phone || ''} ${room ? room.name : ''}`.toLowerCase();
+            return searchStr.includes(tenantSearchQuery);
+        });
+    }
+
     // Sort by name
-    const sorted = [...tenants].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'));
+    const sorted = [...filtered].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'));
 
     let html = `<div class="summary-bar">
         <span class="summary-label">Tổng người thuê</span>
-        <span class="summary-value">${tenants.length}</span>
+        <span class="summary-value">${filtered.length}</span>
     </div>`;
 
     sorted.forEach(t => {
@@ -705,6 +732,12 @@ function showTenantDetail(tenantId) {
 // ─── Invoices Page ─────────────────────
 let invoiceFilter = 'all';
 let invoiceTab = 'room-utility'; // 'room-utility', 'service'
+let invoiceSearchQuery = '';
+
+document.getElementById('invoiceSearchInput')?.addEventListener('input', (e) => {
+    invoiceSearchQuery = e.target.value.toLowerCase().trim();
+    renderInvoices();
+});
 
 function setInvoiceTab(tab) {
     invoiceTab = tab;
@@ -747,6 +780,15 @@ function renderInvoices() {
     // For service tab, only show invoices with service cost
     if (invoiceTab === 'service') {
         filtered = filtered.filter(i => (i.serviceCost || 0) > 0);
+    }
+
+    if (invoiceSearchQuery) {
+        filtered = filtered.filter(inv => {
+            const room = rooms.find(r => r.id === inv.roomId);
+            const tenantsStr = Store.getTenants().filter(t => t.roomId === inv.roomId).map(t => t.name).join(' ').toLowerCase();
+            const searchStr = `${room ? room.name : ''} ${tenantsStr}`.toLowerCase();
+            return searchStr.includes(invoiceSearchQuery);
+        });
     }
 
     // Sort by month desc
