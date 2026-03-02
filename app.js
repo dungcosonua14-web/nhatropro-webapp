@@ -682,70 +682,95 @@ function renderTenants() {
 
     sorted.forEach((t, idx) => {
         const room = rooms.find(r => r.id === t.roomId);
-        const avatarBg = avatarColors[idx % avatarColors.length];
+        const accentColors = [
+            '#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#8b5cf6', '#ef4444'
+        ];
+        const avatarGrads = [
+            'linear-gradient(135deg,#6366f1,#8b5cf6)',
+            'linear-gradient(135deg,#0ea5e9,#6366f1)',
+            'linear-gradient(135deg,#10b981,#0ea5e9)',
+            'linear-gradient(135deg,#f59e0b,#ef4444)',
+            'linear-gradient(135deg,#ec4899,#8b5cf6)',
+            'linear-gradient(135deg,#14b8a6,#6366f1)',
+            'linear-gradient(135deg,#8b5cf6,#ec4899)',
+            'linear-gradient(135deg,#ef4444,#f97316)',
+        ];
+        const accent = accentColors[idx % accentColors.length];
+        const avatarBg = avatarGrads[idx % avatarGrads.length];
+
         html += `
-            <div class="tenant-card" onclick="showTenantDetail('${t.id}')" style="
+            <div onclick="showTenantDetail('${t.id}')" style="
+                display:flex;
                 border-radius:16px;
                 overflow:hidden;
-                padding:0;
-                margin-bottom:12px;
+                margin-bottom:10px;
                 background:var(--surface);
                 border:1px solid var(--border-light);
-                transition:transform 0.15s ease,box-shadow 0.15s ease;
+                cursor:pointer;
+                box-shadow:0 1px 6px rgba(0,0,0,0.08);
             ">
-                <!-- Header card -->
-                <div style="display:flex;align-items:center;gap:14px;padding:14px 14px 10px;">
-                    <div style="
-                        width:48px;height:48px;border-radius:50%;
-                        background:${avatarBg};
-                        display:flex;align-items:center;justify-content:center;
-                        font-size:18px;font-weight:800;color:#fff;
-                        flex-shrink:0;letter-spacing:-0.5px;
-                    ">${getInitials(t.name)}</div>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
-                        <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
-                            ${room ? `<span style="background:rgba(99,102,241,0.15);color:var(--primary-light);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">
-                                <i data-lucide="door-open" style="width:10px;height:10px;"></i> ${room.name}
-                            </span>` : ''}
-                            ${t.moveInDate ? `<span style="color:var(--tg-theme-hint-color);font-size:11px;">
-                                Từ ${formatDate(t.moveInDate)}
-                            </span>` : ''}
+                <!-- Thanh màu bên trái -->
+                <div style="width:4px;background:${accent};flex-shrink:0;border-radius:0;"></div>
+
+                <!-- Nội dung chính -->
+                <div style="flex:1;padding:12px 14px;min-width:0;">
+                    <!-- Hàng 1: Avatar + Tên + Phòng -->
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                        <div style="
+                            width:42px;height:42px;border-radius:12px;
+                            background:${avatarBg};
+                            display:flex;align-items:center;justify-content:center;
+                            font-size:16px;font-weight:800;color:#fff;flex-shrink:0;
+                        ">${getInitials(t.name)}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:15px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                                ${room ? `<span style="
+                                    background:${accent}22;color:${accent};
+                                    font-size:11px;font-weight:700;
+                                    padding:1px 8px;border-radius:8px;
+                                ">📍 ${room.name}</span>` : ''}
+                                ${t.moveInDate ? `<span style="font-size:10px;color:var(--tg-theme-hint-color);">Vào ${formatDate(t.moveInDate)}</span>` : ''}
+                            </div>
                         </div>
                     </div>
-                    ${t.phone ? `
-                        <div onclick="event.stopPropagation();callPhone('${t.phone}')" style="
-                            width:40px;height:40px;border-radius:50%;
-                            background:var(--success);
-                            display:flex;align-items:center;justify-content:center;
-                            cursor:pointer;flex-shrink:0;
-                            box-shadow:0 2px 8px rgba(16,185,129,0.35);
-                        ">
-                            <i data-lucide="phone" style="width:18px;height:18px;color:#fff;"></i>
-                        </div>
-                    ` : ''}
-                </div>
 
-                <!-- Info chips -->
-                <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 14px;">
-                    ${t.phone ? `
-                        <div style="display:flex;align-items:center;gap:5px;background:var(--tg-theme-secondary-bg-color);border-radius:20px;padding:5px 10px;font-size:12px;">
-                            <i data-lucide="phone" style="width:12px;height:12px;color:var(--success);"></i>
-                            <span>${t.phone}</span>
-                        </div>
-                    ` : ''}
-                    ${t.vehiclePlate ? `
-                        <div style="display:flex;align-items:center;gap:5px;background:rgba(168,85,247,0.12);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:700;color:#a855f7;">
-                            <i data-lucide="bike" style="width:12px;height:12px;"></i>
-                            <span>${t.vehiclePlate}</span>
-                        </div>
-                    ` : ''}
-                    ${t.idCard ? `
-                        <div style="display:flex;align-items:center;gap:5px;background:var(--info-bg);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--info);">
-                            <i data-lucide="id-card" style="width:12px;height:12px;"></i>
-                            <span>${t.idCard}</span>
-                        </div>
-                    ` : ''}
+                    <!-- Hàng 2: Thông tin dạng dòng -->
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        ${t.phone ? `
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <div style="display:flex;align-items:center;gap:6px;font-size:13px;">
+                                <div style="width:24px;height:24px;border-radius:8px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;">
+                                    <i data-lucide="phone" style="width:13px;height:13px;color:#10b981;"></i>
+                                </div>
+                                <span style="color:var(--tg-theme-hint-color);">SĐT</span>
+                                <span style="font-weight:600;">${t.phone}</span>
+                            </div>
+                            <div onclick="event.stopPropagation();callPhone('${t.phone}')" style="
+                                padding:4px 10px;border-radius:20px;
+                                background:#10b981;color:#fff;
+                                font-size:11px;font-weight:700;cursor:pointer;
+                            ">Copy</div>
+                        </div>` : ''}
+
+                        ${t.vehiclePlate ? `
+                        <div style="display:flex;align-items:center;gap:6px;font-size:13px;">
+                            <div style="width:24px;height:24px;border-radius:8px;background:rgba(168,85,247,0.12);display:flex;align-items:center;justify-content:center;">
+                                <i data-lucide="bike" style="width:13px;height:13px;color:#a855f7;"></i>
+                            </div>
+                            <span style="color:var(--tg-theme-hint-color);">Biển số</span>
+                            <span style="font-weight:800;color:#a855f7;font-size:14px;letter-spacing:1px;">${t.vehiclePlate.toUpperCase()}</span>
+                        </div>` : ''}
+
+                        ${t.idCard ? `
+                        <div style="display:flex;align-items:center;gap:6px;font-size:13px;">
+                            <div style="width:24px;height:24px;border-radius:8px;background:var(--info-bg);display:flex;align-items:center;justify-content:center;">
+                                <i data-lucide="id-card" style="width:13px;height:13px;color:var(--info);"></i>
+                            </div>
+                            <span style="color:var(--tg-theme-hint-color);">CCCD</span>
+                            <span style="font-weight:600;">${t.idCard}</span>
+                        </div>` : ''}
+                    </div>
                 </div>
             </div>
         `;
