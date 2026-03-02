@@ -174,7 +174,6 @@ function navigateTo(page, addToHistory = true) {
         'tenants': 'pageTenants',
         'invoices': 'pageInvoices',
         'invoiceDetail': 'pageInvoiceDetail',
-        'services': 'pageServices',
         'settings': 'pageSettings'
     };
 
@@ -188,6 +187,7 @@ function navigateTo(page, addToHistory = true) {
 
     // Header UI
     const headerTitle = document.getElementById('headerTitle');
+    headerTitle.textContent = titleMap[page] || '';
     const titleMap = {
         'dashboard': 'Tổng quan',
         'rooms': 'Phòng',
@@ -195,7 +195,6 @@ function navigateTo(page, addToHistory = true) {
         'tenants': 'Người thuê',
         'invoices': 'Hóa đơn',
         'invoiceDetail': 'Chi tiết hóa đơn',
-        'services': 'Dịch vụ',
         'settings': 'Cài đặt'
     };
     headerTitle.textContent = titleMap[page] || '';
@@ -256,7 +255,6 @@ function renderPage(page) {
         case 'rooms': renderRooms(); break;
         case 'tenants': renderTenants(); break;
         case 'invoices': renderInvoices(); break;
-        case 'services': renderServices(); break;
         case 'settings': renderSettings(); break;
     }
 }
@@ -308,10 +306,6 @@ function renderDashboard() {
         <button class="action-btn" onclick="navigateTo('invoices')">
             <div class="action-icon orange"><i data-lucide="receipt"></i></div>
             <span class="action-label">Hóa đơn</span>
-        </button>
-        <button class="action-btn" onclick="navigateTo('services')">
-            <div class="action-icon pink"><i data-lucide="concierge-bell"></i></div>
-            <span class="action-label">Dịch vụ</span>
         </button>
     `;
 
@@ -625,10 +619,12 @@ document.getElementById('tenantSearchInput')?.addEventListener('input', (e) => {
 });
 
 function renderTenants() {
-    const tenants = Store.getTenants();
+    // Chỉ hiển thị người đang thuê: có roomId và chưa có moveOutDate
+    const allTenants = Store.getTenants();
     const rooms = Store.getRooms();
+    const activeTenants = allTenants.filter(t => t.roomId && !t.moveOutDate);
 
-    if (tenants.length === 0) {
+    if (activeTenants.length === 0) {
         document.getElementById('tenantList').innerHTML = `
             <div class="empty-state">
                 <i data-lucide="users"></i>
@@ -639,42 +635,131 @@ function renderTenants() {
         return;
     }
 
-    let filtered = tenants;
+    let filtered = activeTenants;
     if (tenantSearchQuery) {
-        filtered = tenants.filter(t => {
+        filtered = activeTenants.filter(t => {
             const room = rooms.find(r => r.id === t.roomId);
-            const searchStr = `${t.name || ''} ${t.phone || ''} ${room ? room.name : ''}`.toLowerCase();
+            const searchStr = [
+                t.name || '',
+                t.phone || '',
+                t.vehiclePlate || '',
+                room ? room.name : ''
+            ].join(' ').toLowerCase();
             return searchStr.includes(tenantSearchQuery);
         });
     }
 
-    // Sort by name
-    const sorted = [...filtered].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'));
+    // Sắp xếp theo tên phòng
+    const sorted = [...filtered].sort((a, b) => {
+        const roomA = rooms.find(r => r.id === a.roomId);
+        const roomB = rooms.find(r => r.id === b.roomId);
+        return (roomA ? roomA.name : '').localeCompare(roomB ? roomB.name : '', 'vi', { numeric: true });
+    });
 
-    let html = `<div class="summary-bar">
-        <span class="summary-label">Tổng người thuê</span>
-        <span class="summary-value">${filtered.length}</span>
-    </div>`;
+    // Gradient colors cho avatar
+    const avatarColors = [
+        'linear-gradient(135deg,#6366f1,#8b5cf6)',
+        'linear-gradient(135deg,#0ea5e9,#6366f1)',
+        'linear-gradient(135deg,#10b981,#0ea5e9)',
+        'linear-gradient(135deg,#f59e0b,#ef4444)',
+        'linear-gradient(135deg,#ec4899,#8b5cf6)',
+        'linear-gradient(135deg,#14b8a6,#6366f1)',
+    ];
 
-    sorted.forEach(t => {
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px 12px;">
+            <div>
+                <div style="font-size:22px;font-weight:800;">${filtered.length}</div>
+                <div style="font-size:12px;color:var(--tg-theme-hint-color);">người đang thuê</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+                <div style="background:var(--success-bg);color:var(--success);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;">
+                    <i data-lucide="circle-dot" style="width:12px;height:12px;"></i>
+                    Đang thuê
+                </div>
+            </div>
+        </div>
+    `;
+
+    sorted.forEach((t, idx) => {
         const room = rooms.find(r => r.id === t.roomId);
+        const avatarBg = avatarColors[idx % avatarColors.length];
         html += `
-            <div class="tenant-card" onclick="showTenantDetail('${t.id}')">
-                <div class="tenant-card-header">
-                    <div class="tenant-avatar">${getInitials(t.name)}</div>
-                    <div class="tenant-info">
-                        <div class="tenant-name">${t.name}</div>
-                        <div class="tenant-details">
-                            ${room ? `<div class="tenant-detail-item"><i data-lucide="door-open"></i> ${room.name}</div>` : ''}
-                            ${t.phone ? `<div class="tenant-detail-item"><i data-lucide="phone"></i> ${t.phone}</div>` : ''}
-                            ${t.email ? `<div class="tenant-detail-item"><i data-lucide="mail"></i> ${t.email}</div>` : ''}
+            <div class="tenant-card" onclick="showTenantDetail('${t.id}')" style="
+                border-radius:16px;
+                overflow:hidden;
+                padding:0;
+                margin-bottom:12px;
+                background:var(--surface);
+                border:1px solid var(--border-light);
+                transition:transform 0.15s ease,box-shadow 0.15s ease;
+            ">
+                <!-- Header card -->
+                <div style="display:flex;align-items:center;gap:14px;padding:14px 14px 10px;">
+                    <div style="
+                        width:48px;height:48px;border-radius:50%;
+                        background:${avatarBg};
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:18px;font-weight:800;color:#fff;
+                        flex-shrink:0;letter-spacing:-0.5px;
+                    ">${getInitials(t.name)}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+                        <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
+                            ${room ? `<span style="background:rgba(99,102,241,0.15);color:var(--primary-light);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">
+                                <i data-lucide="door-open" style="width:10px;height:10px;"></i> ${room.name}
+                            </span>` : ''}
+                            ${t.moveInDate ? `<span style="color:var(--tg-theme-hint-color);font-size:11px;">
+                                Từ ${formatDate(t.moveInDate)}
+                            </span>` : ''}
                         </div>
                     </div>
-                    ${t.phone ? `<div onclick="event.stopPropagation();callPhone('${t.phone}')" style="width:38px;height:38px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><i data-lucide="phone" style="width:18px;height:18px;color:#fff;"></i></div>` : ''}
+                    ${t.phone ? `
+                        <div onclick="event.stopPropagation();callPhone('${t.phone}')" style="
+                            width:40px;height:40px;border-radius:50%;
+                            background:var(--success);
+                            display:flex;align-items:center;justify-content:center;
+                            cursor:pointer;flex-shrink:0;
+                            box-shadow:0 2px 8px rgba(16,185,129,0.35);
+                        ">
+                            <i data-lucide="phone" style="width:18px;height:18px;color:#fff;"></i>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Info chips -->
+                <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 14px;">
+                    ${t.phone ? `
+                        <div style="display:flex;align-items:center;gap:5px;background:var(--tg-theme-secondary-bg-color);border-radius:20px;padding:5px 10px;font-size:12px;">
+                            <i data-lucide="phone" style="width:12px;height:12px;color:var(--success);"></i>
+                            <span>${t.phone}</span>
+                        </div>
+                    ` : ''}
+                    ${t.vehiclePlate ? `
+                        <div style="display:flex;align-items:center;gap:5px;background:rgba(168,85,247,0.12);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:700;color:#a855f7;">
+                            <i data-lucide="bike" style="width:12px;height:12px;"></i>
+                            <span>${t.vehiclePlate}</span>
+                        </div>
+                    ` : ''}
+                    ${t.idCard ? `
+                        <div style="display:flex;align-items:center;gap:5px;background:var(--info-bg);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--info);">
+                            <i data-lucide="id-card" style="width:12px;height:12px;"></i>
+                            <span>${t.idCard}</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
     });
+
+    if (filtered.length === 0 && tenantSearchQuery) {
+        html += `
+            <div class="empty-state">
+                <i data-lucide="search-x"></i>
+                <p class="empty-state-text">Không tìm thấy kết quả</p>
+            </div>
+        `;
+    }
 
     document.getElementById('tenantList').innerHTML = html;
     lucide.createIcons();
