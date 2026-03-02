@@ -49,18 +49,20 @@ const Store = {
         console.log('[Store] ✅ All data loaded');
     },
 
-    // ─── Start realtime listeners ───
+    // ─── Realtime listeners (onSnapshot) ───
+    // Hiệu quả hơn polling: chỉ đọc khi data thay đổi, không đọc định kỳ vô ích
+    _listeners: [],
     startListeners(onUpdate) {
+        if (this._listeners.length > 0) return; // đã chạy rồi
         const collections = ['rooms', 'tenants', 'contracts', 'services', 'roomServices', 'invoices', 'utilities'];
 
         collections.forEach(col => {
             const unsub = db.collection(col).onSnapshot(snapshot => {
                 const items = [];
-                snapshot.forEach(doc => {
-                    items.push({ ...doc.data(), id: doc.id });
-                });
+                snapshot.forEach(doc => items.push({ ...doc.data(), id: doc.id }));
+                const changed = JSON.stringify(this._data[col]) !== JSON.stringify(items);
                 this._data[col] = items;
-                if (this._loaded && onUpdate) onUpdate(col);
+                if (this._loaded && changed && onUpdate) onUpdate(col);
             }, err => {
                 console.warn(`[Store] Listener error for ${col}:`, err.message);
             });
@@ -70,11 +72,15 @@ const Store = {
         // Settings listener
         const unsub = db.collection('settings').doc('main').onSnapshot(doc => {
             if (doc.exists) {
-                this._data.settings = doc.data();
-                if (this._loaded && onUpdate) onUpdate('settings');
+                const data = doc.data();
+                const changed = JSON.stringify(this._data.settings) !== JSON.stringify(data);
+                this._data.settings = data;
+                if (this._loaded && changed && onUpdate) onUpdate('settings');
             }
-        });
+        }, err => console.warn('[Store] Settings listener error:', err.message));
         this._listeners.push(unsub);
+
+        console.log('[Store] 👁️ Realtime listeners active — chỉ đọc khi có thay đổi');
     },
 
     stopListeners() {
