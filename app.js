@@ -187,7 +187,6 @@ function navigateTo(page, addToHistory = true) {
 
     // Header UI
     const headerTitle = document.getElementById('headerTitle');
-    headerTitle.textContent = titleMap[page] || '';
     const titleMap = {
         'dashboard': 'Tổng quan',
         'rooms': 'Phòng',
